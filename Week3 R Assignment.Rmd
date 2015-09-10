@@ -1,0 +1,23 @@
+---
+title: "Pittsburgh bridges Data Set"
+author: "sanjive"
+date: "September 9, 2015"
+output: html_document
+---
+
+Get the entire dataset in bridge_data and the add column names to each data column and then read table in bridge_tbl  and then find the summary of the new table and few data from the table.
+Then to manupulate or work with a smaller dataset we can slice the dataset into subset and work on it as bridge_sub
+
+```{r}
+bridge_data <- url("https://archive.ics.uci.edu/ml/machine-learning-databases/bridges/bridges.data.version1","r")
+colNames<-c("IDENTIF","RIVER","LOCATION","ERECTED","PURPOSE","LENGTH","LANES","CLEAR-G","T-OR-D","MATERIAL","SPAN","REL-L","TYPE")
+bridge_tbl<-read.table(bridge_data,sep=",",dec=".",col.names=colNames,na.strings=c("NA", "-", "?"," "),stringsAsFactors=FALSE)
+summary(bridge_tbl)
+head(bridge_tbl)
+bridge_sub<-bridge_tbl[,c(1,3,5,7,9,11)]
+summary(bridge_sub)
+head(bridge_sub)
+close(bridge_data)
+
+```
+
