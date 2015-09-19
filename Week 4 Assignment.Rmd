@@ -1,0 +1,106 @@
+---
+title: "Week 4 Assignment"
+author: "sanjivek"
+date: "September 18, 2015"
+output: html_document
+---
+
+4)
+a)	[0-9]+\\$
+Type of String: Character Classes of [0-9] with Quantifier + (matched One or more times) ignoring the Metacharacter $ using \\ as \\$
+
+Example as Shown below:
+```{r}
+library (stringr)
+str_extract("1234$ is a asdasdas dsadas$ $12345 3456$ 57648", "[0-9]+\\$")
+str_extract_all("1234$ is a asdasdas dsadas$ $12345 3456$ 57648", "[0-9]+\\$")
+```
+
+b)\\b[a-z]{1,4}\\b
+Type of String: Anchor Sequence in R to match a word boundary \\b and matches with Regex character classes of any lower case ASCII letter [a-z] with Quantifier {1,4} which means precending items will match atleast 1 time but not more than 4 times
+
+```{r}
+
+
+expb="123 is the way to DO anything unIque AND make amazing things"
+str_extract(expb,"\\b[a-z]{1,4}\\b")
+str_extract_all(expb,"\\b[a-z]{1,4}\\b")
+
+```
+
+c).*?\\.txt$
+Type of String: Quantifier * means preceding item will be matched zero or more times and ? means preceding items is optional and will be matched atmost once. So any character ahead of . metacharacter as .txt will be considered
+
+```{r}
+str_extract("adas asdasd adasd _txt", ".*?\\.txt$")
+str_extract("Iamhere.txt",".*?\\.txt$")
+
+```
+
+
+d) \\d{2}/\\d{2}/\\d{4}
+Type of String: This is a Achor sequence which will match a digit in a specfic format as shown here having {2} digits /{2} digit/{4} digit which is in date format
+
+```{r}
+str_extract("12\12\2012","\\d{2}/\\d{2}/\\d{4}")
+str_extract("12/12/2012","\\d{2}/\\d{2}/\\d{4}")
+```
+
+
+e)<(.+?)>.+?</\\1>
+Type of String: This is a Achor sequence which will match a specfic format and case and it should be same for initial and last <>
+```{r}
+str_extract("<font> </head>","<(.+?)>.+?</\\1>")
+str_extract("<font>I am an awesome font</font>","<(.+?)>.+?</\\1>")
+str_extract("<HTml>AM I correct </html>","<(.+?)>.+?</\\1>")
+```
+
+5) Rewrite the expression [0-9]+\\$ in a way that all elements are altered but the expression performs the same task
+
+
+```{r}
+str_extract("1234$ is a asdasdas dsadas$ $12345 3456$ 57648", "\\d{1,}[$]")
+str_extract_all("1234$ is a asdasdas dsadas$ $12345 3456$ 57648", "\\d{1,}[$]")
+
+```
+
+6) Consider the mail address chunkylover53[at]aol[dot]com
+a.Transform the string to a standard mail format using regular expressions
+
+```{r}
+emailID="chunkylover53[at]aol[dot]com"
+emailID=sub("\\[at]","@",emailID)
+emailID=sub("\\[dot]",".",emailID)
+emailID
+```
+
+b. Imagine we are trying to extract the digits in the mail address. To do so we write the expression [:digit:]. Explain why this fails and correct the expression.
+Answer: Failed because of Wrong syntax. Correct expression is [[:digit:]]
+```{r}
+str_extract_all("chunkylover53[at]aol[dot]com","[[:digit:]]{1,}")
+     
+```
+
+c.Instead of using the predefined character classes, we would like to use the predefined symbols to extract the digits in the mail address. To do so we write the expression \\D. Explain why this fails and correct the expression.
+Answer: Failed because of Wrong syntax. \\D is for non digit characters and for digit charaters we use \\d
+
+```{r}
+str_extract_all("chunkylover53[at]aol[dot]com","\\d{1,}")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
