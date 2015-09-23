@@ -1,0 +1,81 @@
+---
+title: "Project 1 - Chess Player Rating"
+author: "sanjive"
+date: "September 21, 2015"
+output: html_document
+---
+Project Goal: Extract chess Player Name, State Name, Pre Rating and New Rating as an average from the Win, Loss and Draw points of the opponent and convert the new extracted dataset to a csv file for easy upload to any SQL DB.
+
+Initiated project with the tournamentinfo.txt upload to Github for easy access to everyone and fetching the data universally. Once the file data is accessible, moved forward with the first step as:
+- Extraction of Data: Extraction of data started up with analyzing the data pattern which looks like ithas two different pattern of data as dataLine1 and dataLine2. 
+- Once we have all the data in dataLine1 and dataLine2, started up extraction of playerName, stateName and totalPoints
+- Now the challenge is to get the Pre rating data without "P" suffix, so that this can be used to calculate the New Rating. This was achieved by replacing the P[0-9] with "", now we are left with the string data set, which was converted to numeric for further calculation
+
+```{r}
+library(stringr)
+tournament_info <- readLines("https://raw.githubusercontent.com/ksanju0/IS607/master/tournamentinfo.txt")
+dataLine1 = unlist(str_extract_all(tournament_info,"^[[:blank:]]+\\d{1,2}.+"))
+dataLine2=unlist(str_extract_all(tournament_info,"^[[:blank:]]+[A-Z]{2}.+"))
+
+playerName=unlist(str_extract_all(dataLine1,"(\\b[[:upper:]-]+\\b\\s)+(\\b[[:upper:]-]+\\b){1}"))
+stateName=unlist(str_extract_all(dataLine2,"[[:upper:]]{2}" ))
+totalPoints=as.numeric(unlist(str_extract_all(dataLine1,"\\d(.)\\d")))
+
+cleanpreRatingData<-str_replace_all(dataLine2,pattern="[P]\\d{1,}"," ")
+
+
+line21 <- str_extract_all(cleanpreRatingData,"([R(:)][[:blank:]]+\\d{3,}+)")
+preRating<-as.numeric(str_extract_all(line21,"\\d{3,}"))
+
+```
+
+Now next steps is to find the opponents numbers with whom each of the players had either Win, Loss or Draw
+
+```{r}
+Opponents1<- str_extract_all(dataLine1,"[WLD][[:blank:]]+\\d{1,2}")
+OpponentsData<-str_extract_all(Opponents1,"\\d{1,2}")
+opponents <- lapply(OpponentsData, as.numeric)
+```
+
+Now we have all the data required to calculate the new Rating, but before that we need to bind all the data together in a data frame (PlayerDF) for easy access and reference while doing the calculation for ave_newRate as a function. This function will calculate the average rating of the player based on Win, Loss or Draw and return the complete dataset as an object to newRate. Once we have the dataSet, convert strings to numeric and format it to match with the Pre rating.
+Finally we cna bind this newRate also with the data frame (PlayerDF) and write it in any format for future use, here we have write it in csv format.  
+
+```{r}
+
+PlayerDF<- data.frame(playerName,stateName,totalPoints,preRating)
+ave_newRate <- function(x){
+  Newrating<-0
+totOpponents<-length(x)
+for (i in x){
+  Newrating<-Newrating+PlayerDF[i,"preRating"]}
+  return(Newrating/totOpponents)
+  }
+
+newRate <- unlist(lapply(opponents, ave_newRate))
+newRate <- as.numeric(sprintf("%1.0f",newRate))
+
+PlayerDF<- data.frame(playerName,stateName,totalPoints,preRating,newRate)
+PlayerDF
+write.csv(PlayerDF, file ="playerDF.csv")
+```
+
+Further analysis to find out the data distribution pattern for new Rating as shown below using normal density plot and further confirmation to teh normal disdribution is done using normal Q-Q  Plot
+
+```{r}
+par(mfrow=c(1,2))
+newRateMean <- mean(PlayerDF$newRate)
+newRateSD <- sd(PlayerDF$newRate)
+hist(PlayerDF$newRate,probability=TRUE)
+x <- 800:1900
+y <- dnorm(x = x, mean = newRateMean, sd = newRateSD)
+lines(x = x, y = y, col = "blue")
+
+qqnorm(PlayerDF$newRate)
+qqline(PlayerDF$newRate)
+
+summary(PlayerDF$newRate)
+
+```
+
+Conclusion: Histogram shows the unimodal distribution with mean almost equal to median as 1379 emphasizing the normal distribution pattern. This was reinforced by the normal QQ plot which also suggest as most of the data is around the mean/median and dense at 1310 to 1379. it also has outliers as 1605 and few more data point beyond 1500.
+
