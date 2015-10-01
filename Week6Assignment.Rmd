@@ -1,0 +1,54 @@
+---
+title: "Week 6 Assignment - Flight Delay"
+author: "sanjivek"
+date: "September 26, 2015"
+output: html_document
+---
+Goal: To compare the flight delay across five destinations for Alaska and AM West Airlines.
+Initiated analysis by loading the csv file to GITHUB for global access. Then reading the file and converting it into a Dataframe for easy manupulation
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+library(stringr)
+flight_del <- read.csv("https://raw.githubusercontent.com/ksanju0/IS607/master/flightdet.csv",header=TRUE,sep=",",fill = TRUE)
+hflights_df<-tbl_df(flight_del)
+```
+
+Found that 2 of the columns doesn't have any names, so assigned column names  using rename() functions
+
+```{r}
+
+rename <- function(dat, oldnames, newnames) {
+  datnames <- colnames(dat)
+ datnames[which(datnames %in% oldnames)] <- newnames
+ colnames(dat) <- datnames
+ dat
+}
+
+hflights_df<- rename(hflights_df,c("X","X.1"), c("flightName","status"))
+
+```
+
+Now, raw dataset needs to be transformed to Wide structure so that we can fetch and manipulate the data easily using tidyr and dplyr. So initiated data cleaning and tranformation using gather() which widens the destinaton and numbers related with delayed and On time   flights. After gather(), applied spread() to convert On time and delayed as columns. Then, gt erroe due to "on Time" column name which has gap in between. So I again used the rename function to change the column to "onTime". This was used then to calculate the percentDelayed as new column dataset using mutate()
+
+```{r}
+hflights_df<-gather(hflights_df,"Destinations","n",3:7)
+hflights_df<-spread(hflights_df,"status","n")
+hflights_df<- rename(hflights_df,c("on time"),c("onTime"))
+hflights_df<-mutate(hflights_df, percentDelayed=(delayed/(onTime+delayed))*100)
+hflights_df
+```
+
+Now, I have all the required data fields in  wide formate to visualize the data for airlines per destination. This will help  to compare and assess the delay per destination per airlines. Used ggplot2 to provide a histogram chart to compare the most delayed flights per destination as % delayed 
+
+```{r}
+s <- ggplot(data = hflights_df, aes(x = Destinations, y = percentDelayed, fill = flightName))
+s + geom_histogram(stat = "identity", position = "dodge") + ggtitle("Flight Delay by Destinations and Airlines") +
+xlab("Destinations") + ylab("% Delayed Flights by Destinations")
+select(hflights_df,flightName, Destinations, percentDelayed)
+
+```
+
+Conclusion: AM West is delayed the most in San francisco and Seattle as 28% and 23%. Flight delays are least in Phoenix for both the airlines.
