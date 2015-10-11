@@ -1,0 +1,65 @@
+---
+title: "IS607 Project 2"
+author: "sanjivek"
+date: "October 2, 2015"
+output: html_document
+---
+For Project #2, I took the Reed colleges student data who are enrolled since 2008 - 2015 per state and answer few of the questions as:
+- Which state has highest enrollment 
+- How is the enrollment on year on year basis
+
+So I started my analysis by data extraction from site using xpath, this helps me to extract the entire table in the most efficient way and store it in a temp table. Although it is recommended for making a csv file for the data, I find working directly on the dynamic site more challenging and a learning experience for me. Hope it is acceptable for grades.  
+
+```{r}
+library(rvest)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(sqldf)
+theurl <- "http://www.reed.edu/ir/geographic_states.html"
+studentTable<-theurl%>%
+  html() %>%
+  html_node(xpath='//*[@id="mainContent"]/table')%>%
+  html_table(fill=TRUE)
+```
+
+Cleaning the data is the next most important thing to do, for which tidyr and dplyr packages were very helpful, So I made the data as wide structure by first filtering the data table without Total rows and then gather the Years to be a column of the table. Now I need to make the Year and Enrolled field data properties relevant by coverting from factor to numeric and attach it with a data frame for easy manupulation. 
+
+```{r}
+studentTable<-filter(studentTable,State!='Total')
+studentTable<-gather(studentTable,"Year","Enrolled",2:9)
+studentTable$Enrolled<-as.numeric(studentTable$Enrolled)
+studentTable$Year<-as.numeric(as.character(studentTable$Year))
+Year<-c(studentTable$Year)
+State<-c(studentTable$State)
+Enrolled<-c(studentTable$Enrolled)
+studentTable<-data.frame(State,Year,Enrolled)
+```
+
+Although rvest has group and summary like ready functions which can help in analysis, I always preferred SQLDF package because of my familiarity and  convenient to use SQL, so I used SQLDF package to answer both of my questions as enrollment per year and enrollment per state.
+
+```{r}
+
+yearEnrollment<- sqldf(c("select sum(Enrolled) As enrolledTot, Year
+                  from studentTable group by Year order by Year desc"))
+
+studentTable<-sqldf(c("select sum(Enrolled) As enrolledTot, State
+                  from studentTable group by State order by enrolledTot desc"))
+
+```
+
+Final step is to Visualization of the data for which I used ggplot2 package
+
+```{r}
+
+ggplot(data = studentTable, aes(x = State, y = enrolledTot, fill = State)) + geom_histogram(stat="identity") + ggtitle("State vs Enrollment") +
+xlab("States") + ylab("Total Enrollment")
+studentTable
+
+ggplot(data = yearEnrollment, aes(x = Year, y = enrolledTot, fill = Year)) + geom_histogram(stat="identity") + ggtitle("Year vs Enrollment") +
+xlab("Year") + ylab("Total Enrollment")
+
+yearEnrollment
+
+```
+
