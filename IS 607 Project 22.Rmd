@@ -1,0 +1,180 @@
+---
+title: "IS607 Project 2 (Data Set 2 & 3)"
+author: "sanjivek"
+date: "October 14, 2015"
+output: html_document
+---
+#### Project 2 Dataset 2:: 
+Choose any three of the "wide" datasets identified in the Week 6/7 Discussion item. (You may use your own dataset; please don't use my Sample Post dataset, since that was used in your Week 6 assignment!) For each of the three chosen datasets:
+
+- Create a .CSV file (or optionally, a MySQL database!) that includes all of the information included in the dataset. You're encouraged to use a "wide" structure similar to how the information appears in the discussion item, so that you can practice tidying and transformations as described below.]
+
+- Read the information from your .CSV file into R, and use tidyr and dplyr as needed to tidy and transform your data. [Most of your grade will be based on this step!]
+
+- Perform the analysis requested in the discussion item.
+
+- Your code should be in an R Markdown file, posted to rpubs.com, and should include narrative descriptions of your data cleanup work, analysis, and conclusions.
+
+- Please include in your homework submission, for each of the three chosen datasets:
+The URL to the .Rmd file in your GitHub repository. and The URL for your rpubs.com web page.
+
+===================================================================================================
+
+
+I choose the noaa dataset for Climate at a Glance to analyze the temperature variation happened in US since 1895 and is it a valid statement that we are facing extreme temperature now compared to 50 or 70 years back.
+Loaded tabel directly from the website URL and extrated tabel using XPATH, then transformed the HTML tabel into data frame and renamed the column names.
+
+```{r}
+library(xml2)
+library(rvest)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(sqldf)
+library(RColorBrewer)
+library(ggthemes)
+library('IS606')
+
+theurl<-"http://www.ncdc.noaa.gov/cag/time-series/us"
+
+tempTable<-theurl%>%
+  read_html() %>%
+  html_node(xpath='//*[@id="values"]')%>%
+  html_table(fill=TRUE)
+
+tempTab<-tbl_df(tempTable)
+colnames(tempTab)<-c("Date","Value","Rank","Anomaly")
+```
+
+Now I need to clean the data to make it consumable and ready for visualization, used stringr package for performing the replacement of special characters and then converting dates from integer to date format. Once the dataset is clean this can be exported to .csv format
+
+```{r}
+tempTab$Value<-as.numeric(str_replace_all(tempTab$Value,pattern = "°F",""))
+tempTab$Anomaly<-as.numeric(str_replace_all(tempTab$Anomaly,pattern = "°F",""))
+tempTab$Date<-as.Date(gsub('^([0-9]{4})([0-9]{2})$', '\\1-\\2-01', tempTab$Date))
+
+write.csv(tempTab, file ="tempTab.csv")
+
+```
+
+Since the data is spread across 120 years it would be easy to analyze by dividing them into decades and taking mean for temperature variation. 
+
+```{r}
+
+year1<- 1895:2015
+ indx<-findInterval(year1,seq(1895,2015,by=10))
+group<-seq(1895,2015,by=10)
+ind<-seq(1,length(group),by=1)
+labl1<-paste(group[ind],group[ind+1],sep="-")[-42]
+tempTab1<- data.frame(year=year1,decade=labl1[indx],Value=tempTab$Value, Anomaly=tempTab$Anomaly,stringsAsFactors=FALSE)
+tempTab1$decade<-str_replace(tempTab1$decade,pattern="NA","2015")
+tempTab1$decade <-as.character(tempTab1$decade)
+```
+
+Once I had all the years sorted out as decades frequency, I transformed it into a new Dataframe with Year, Decade, value and Anamoly to initiate further analysis.
+Used SQLDF package to group the data and calculate means for decade wise teamperature and anamoly variation.
+
+```{r}
+
+newTab<- sqldf("select decade, AVG(Value) AveTemp, AVG(Anomaly) AveAno from tempTab1 GROUP BY decade")
+
+```
+Plotted histogram using ggplot to see the variation in temperature across century is not very conclusive as data is quiet consistent and normalized with no peaks seen in the grapgh below.
+
+```{r}
+ggplot(data = newTab, aes(x = newTab$decade, y = newTab$AveTemp, fill = "Average Temperature Per Decade")) + geom_bar(stat ="identity", position="dodge") + scale_fill_brewer(palette = "Red")  + theme_hc(bgcolor = "darkunica") + scale_colour_hc("darkunica") + ggtitle("Temperature variation per Decade") + ylab("Average Temperature (Degree F)")
+summary(newTab)
+```
+
+Conclusion: It's hard to conclude this analysis as global warming or drastic increase in temperature in last few decades as there is not  much variation seen in the temperature plotting it per decade.
+We need to look into other factors now to see the environmental impact in last few decades.
+
+
+So plotted normal distribution chart to analyze the normality of the data and it comes out as near to normal distribution with 2 data points as outlier and most of the data fall near mean.
+
+
+```{r}
+s=sd(newTab$AveTemp)
+m=mean(newTab$AveTemp)
+
+par(mfrow=c(1,2))
+hist(newTab$AveTemp,probability=TRUE,ylim = c(0, 0.5))
+x <- 50:100
+y <- dnorm(x = x, mean = m, sd = s)
+lines(x = x, y = y, col = "blue")
+
+qqnormsim(newTab$AveTemp)
+qqline(newTab$AveTemp)
+
+```
+
+==================================================================================================================
+
+#### Project 2 Dataset 3:
+
+Choose any three of the "wide" datasets identified in the Week 6/7 Discussion item. (You may use your own dataset; please don't use my Sample Post dataset, since that was used in your Week 6 assignment!) For each of the three chosen datasets:
+
+- Create a .CSV file (or optionally, a MySQL database!) that includes all of the information included in the dataset. You're encouraged to use a "wide" structure similar to how the information appears in the discussion item, so that you can practice tidying and transformations as described below.]
+
+- Read the information from your .CSV file into R, and use tidyr and dplyr as needed to tidy and transform your data. [Most of your grade will be based on this step!]
+
+- Perform the analysis requested in the discussion item.
+
+- Your code should be in an R Markdown file, posted to rpubs.com, and should include narrative descriptions of your data cleanup work, analysis, and conclusions.
+
+- Please include in your homework submission, for each of the three chosen datasets:
+The URL to the .Rmd file in your GitHub repository. and The URL for your rpubs.com web page.
+
+===================================================================================================
+
+This dataset was a smaller one, however the data was quiet intersting to know the overall revenue of the Big 5 IT companies as shown below:
+
+![image](https://raw.githubusercontent.com/ksanju0/IS607/master/companydata.PNG)
+
+Since it was not an HTML table which can be scraped, I thought of experimenting with database table creation using SQLDF package and then making it wide format for analysis purpose using dplyr.
+
+```{r}
+
+library(sqldf)
+library(rvest)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(stringr)
+
+
+big5_IT_rev <-sqldf(c("Drop table if exists revenue","CREATE table IT_revenue ( ID serial PRIMARY KEY, Year int (10) NOT NULL, Google int NULL, Facebook int NULL, Yahoo int NULL, Microsoft int NULL, AOL int NULL)",
+  "INSERT INTO IT_revenue (ID, Year, Google, Facebook, Yahoo, Microsoft, AOL) Values ('1','2009','0.36','0.56', '1.26', '0.37', '0.51'), ('2', '2010','0.86','1.21', '1.43', '0.51', '0.47'), ('3', '2011', '1.67', '1.73', '1.36', '0.6', '0.53'), ('4','2012','2.26','2.18', '1.35','0.9','0.7'), ('5','2013','2.99','3.17','1.27','0.79','0.73')", "Select * from IT_revenue"))
+big5_IT_rev<-gather(big5_IT_rev,"Company","Revenue",3:7)
+
+big5_IT_rev
+```
+
+Now I have a wide format table of Big 5 IT Revenues, which I need to present as a total revenue generated in five fiscal year and conclude the company who has highest revenue.
+
+So I started up with interval creation and then used sqldf to group the data per company.
+
+```{r}
+
+year1<- 2009:2013
+ indx<-findInterval(year1,seq(2009,2013,by=4))
+group<-seq(2009,2013,by=4)
+ind<-seq(1,length(group),by=1)
+labl1<-paste(group[ind],group[ind+1],sep="-")[-42]
+tempTab1<- data.frame(year=year1,decade=labl1[indx],Revenue=big5_IT_rev$Revenue, Company=big5_IT_rev$Company,stringsAsFactors=FALSE)
+tempTab1$decade<-str_replace_all(tempTab1$decade,pattern="2013-NA","2009-2013")
+
+com_Yr_Rev<- sqldf("select decade Fiscal_Years, Company, sum(Revenue) Total_Revenue from tempTab1 group by Company")
+com_Yr_Rev
+```
+
+Finally  used ggplot to plot a histogram to reflect the company wise revenue and it has surprised my to see Facebook as a winner with 8.65 Billion in last 5 year.
+
+```{r}
+ggplot(data = com_Yr_Rev, aes(x = Fiscal_Years, y = Total_Revenue, fill = Company)) + geom_bar(stat ="identity", position="dodge")  + ggtitle("Total Revenue in last 5 Fiscal Year") + ylab("Revenue (2009-2013) in Billions")
+
+```
+
+
+
