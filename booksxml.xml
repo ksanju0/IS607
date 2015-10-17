@@ -1,0 +1,41 @@
+<?xml version="1.0"? encoding="UTF-8" ?>
+<!DOCTYPE books>
+<!-- this is a comment -->
+<books>
+<book type="DS-Python" lang="en">
+<title>	Data Science from Scratch: First Principles with Python</title>
+<author>
+<first_name>Joel</first_name> <last_name>Grus</last_name>
+</author>
+<isbn>978-1491901427</isbn>
+<price>$28.51</price>
+<language>English</language>
+</book>
+<book type="DS-Analytics" lang="en">
+<title>	Data Science for Business: What you need to know about data mining and data-analytic thinking</title>
+<author>
+<first_name>Foster</first_name> <last_name>Provost</last_name>
+</author>
+<Co_Author>
+<first_name>Tom</first_name> <last_name>Fawcett</last_name>
+</Co_Author>
+<isbn>978-1449361327</isbn>
+<price>$39.99</price>
+<language>English</language>
+</book>
+<book type="DS-Python" lang="en">
+<title>	Data Smart: Using Data Science to Transform Information into Insight</title>
+<author>
+<first_name>John</first_name> <last_name>Foreman</last_name>
+</author>
+<isbn>978-1118661468</isbn>
+<price>$27.48</price>
+<language>English</language>
+</book>
+</books>
+
+
+
+
+
+
