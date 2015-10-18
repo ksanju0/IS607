@@ -1,0 +1,69 @@
+---
+title: "Week8"
+author: "sanjivek"
+date: "October 17, 2015"
+output: html_document
+---
+#### Week 8 Assignment: Working with XML and JSON in R:
+
+Pick three of your favorite books on one of your favorite subjects.   At least one of the books should have more than one author.  
+For each book, include the title, authors, and two or three other attributes that you find interesting. Take the information
+that you’ve selected about these three books, and separately create three files which store the book’s information in HTML 
+(using an html table)XML, and JSON formats (e.g.  “books.html”, “books.xml”, and “books.json”).  To help you better understand the different file structures, I’d prefer that you create each of these files “by hand” unless you’re already very comfortable with the file formats.
+Write R code, using your packages of choice, to load the information from each of the three sources into separate R data frames.   Are the three data framesidentical?your deliverable is the three source files and the R code.  If you can, package your assignment solution up into an .
+Rmd file and publish to rpubs.com.  [This will also require finding a way to make your three text files accessible from the web]
+=========================================================================================================================================
+
+First I created 3 files on 3 book details on Data science and stored it in github with .html, .xml and .csv (for JSO) format. Now my goal is to fetch these files through R code and get their data dislayed per difference format. To start with, I read the csv file and loaded the data table , the to make it structure  have transformed  it to data frame using tbl_df (), then my nest step was to convert this data frame to a Json fle which I did it with the help of RJSONIO package and using  toJSON() function. Display of JSON can be done by cat()
+
+
+```{r}
+library(xml2)
+library(dplyr)
+library(tidyr)
+library(rvest)
+library(RCurl)
+library(RJSONIO)
+library(XML)
+
+csv_data<- read.csv(file = "https://raw.githubusercontent.com/ksanju0/IS607/master/bookscsvtojson.csv", header=TRUE)
+conv_DF<-tbl_df(csv_data)
+conv_json=toJSON(conv_DF)
+cat(conv_json)
+
+```
+
+For Html format, I created 3 tables which has book details and then loaded the url to R for fetching the data. Then reading he HTML table using readHTMLTable() and then finally displaying the content using head()
+
+
+```{r}
+fetchURL=getURL("https://raw.githubusercontent.com/ksanju0/IS607/master/bookshtml.html")
+tab_content= readHTMLTable(fetchURL)
+head(tab_content)
+```
+
+
+First we need to fetch the https url using getURL(), the we parse the XML. Then we get the XML Root and chilren root and then get all the value using sapply()
+
+
+```{r}
+fetchURL=getURL("https://raw.githubusercontent.com/ksanju0/IS607/master/booksxml.xml")
+parseXML= xmlParse(fetchURL, useInternalNodes = FALSE)
+getroot=xmlRoot(parseXML)
+getchild=xmlChildren(getroot)
+sapply(getchild, xmlValue)
+```
+
+Another way to get the XMLvalue is getting the XMl Root and then converting it to a Data frame.
+
+```{r}
+
+fetchURL = getURL("https://raw.githubusercontent.com/ksanju0/IS607/master/booksxml.xml")
+parseXML= xmlParse(fetchURL, useInternalNodes = TRUE)
+getroot = xmlRoot(parseXML)
+tbl_DF = xmlToDataFrame(getroot)
+tbl_DF
+
+```
+
+Conclusion: Data extracted from three different format are same except for JSON which provide a specific format of data, rest XML and HTML has the same data format.
