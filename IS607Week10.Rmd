@@ -1,0 +1,17 @@
+---
+title: "Kumar-Week10Assignment"
+author: "sanjivek"
+date: "November 1, 2015"
+output: html_document
+---
+Registered for NYTIme API and then with the help of their API console created an URI which provide the data in JSON format to be used in the R program. Results are saved in a variable for further analysis.
+
+```{r}
+library(RCurl)
+library(RJSONIO)
+
+bookData=fromJSON("http://api.nytimes.com/svc/books/v3/lists/2015-01-10/hardcover-fiction.json?api-key=9729b556fd5c2d8acf029afffc15b9d2%3A1%3A73350914")
+bookData_Res=bookData$results
+str(bookData_Res)
+```
+
