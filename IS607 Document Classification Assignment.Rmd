@@ -1,0 +1,93 @@
+---
+title: "Project  SpamHam"
+author: "sanjivek"
+date: "November 20, 2015"
+output: html_document
+---
+Started with reading the Spambase data and loading into a table and the  conversion of tabel to a Data Frame using dplyr package.
+John DeBase has suggested a wonderful package caret so following through the notes provided at caret package from http://topepo.github.io/caret/index.html has helped alot in the code below:
+
+Once we have data frame ready, naming the 58th column as spam is very handy to manipulate the data lateron.
+
+
+```{r}
+library(dplyr)
+library(caret)
+library(randomForest)
+library(MASS) 
+library(nnet)
+
+spamdata<-read.table("http://archive.ics.uci.edu/ml/machine-learning-databases/spambase/spambase.data",header=TRUE, sep=",", na.strings="NA", dec=".", strip.white=TRUE)
+spamdata=tbl_df(spamdata)
+colnames(spamdata)[58]="spam"
+spamdata$spam=as.factor(spamdata$spam)
+
+```
+
+Now when I have the data frame ready to analyze, I have to take the next step as creating a training and testing data set. Since it takes lot longer to process the data smaller sample set of 1000 records considered.
+Training and testing data set are divided as 70:30 ratio using createDataPartition
+
+
+```{r}
+
+
+set.seed(1234)
+spam_sample = spamdata[sample(nrow(spamdata), 1000), ]
+training_index = createDataPartition(spam_sample$spam, p=.7, list=FALSE)
+
+training_set = spam_sample[training_index, ] 
+testing_set = spam_sample[-training_index, ]
+
+#spamdata <- rbind(training_set, testing_set)
+#outcomes <- spam_sample$spam
+#spamdata <- subset(spam_sample, select = -spam)
+#matrix <- as.DocumentTermMatrix(spam_sample, weightTf)
+#container <- create_container(matrix, t(outcomes), trainSize = 1:3500, testSize = 3501:4000, virgin=FALSE)
+```
+
+Now creation of trainig control and training the model is the next steps as shown below:
+
+```{r}
+tr_ctrl = trainControl(method = "repeatedcv",number = 10,repeats = 10)
+
+#train the models
+
+forest_train = train(spam ~ ., 
+             data=training_set, 
+           method="rf",
+         trControl=tr_ctrl)
+
+
+lda_train = train(spam ~ ., 
+              data=training_set, 
+             method="lda",
+            trControl=tr_ctrl)
+```
+
+Predict model preparation based on trained model and testing set using predict function from caret package
+
+
+```{r}
+pred_forest = predict(forest_train, testing_set[,-58])
+pred_lda = predict(lda_train, testing_set[,-58])
+#pred_nnet = predict(nnet_train, testing_set[,-58])
+#pred_qda=predict(qda_train,testing_set[,-58])
+#pred_fda=predict(fda_train,testing_set[,-58])
+#pred_mda=predict(mda_train,testing_set[,-58])
+#pred_glm=predict(glm_train,testing_set[,-58])
+
+confusionMatrix(pred_forest ,testing_set$spam)
+confusionMatrix(pred_lda,testing_set$spam)
+#confusionMatrix(pred_nnet,testing_set$spam)
+#confusionMatrix(pred_qda,testing_set$spam)
+#confusionMatrix(pred_fda,testing_set$spam)
+#confusionMatrix(pred_mda,testing_set$spam)
+#confusionMatrix(pred_glm,testing_set$spam)
+
+```
+
+
+Summary: I tried my hands on Random Forest and Linear Discriminant Analysis and both stood at 91 and 90% accuracy, so considering either of it will be fine for further refinement of model. This is my first experience with algorithm and the biggest challenge which I am facing is to determine which algorithm to choose from and I believe we will become more conversant with this as we get into the depth of Machine Learning.
+
+I have kept all the other codes untouched to ensure that I should work on it and complete rest of the analysis too with different algorithms.
+
